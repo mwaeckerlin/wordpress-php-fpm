@@ -1,0 +1,31 @@
+version: "3.8"
+
+services:
+  php-fpm:
+    build: .
+    image: mwaeckerlin/wordpress-proxy
+    environment:
+      WORDPRESS_DB_HOST: mysql
+      WORDPRESS_DB_NAME: wordpress
+      WORDPRESS_DB_USER: wordpress
+      WORDPRESS_DB_PASSWORD: wordpress
+
+  wordpress:
+    image: mwaeckerlin/wordpress
+    depends_on:
+      - php-fpm
+    ports:
+      - "8080:8080"
+
+  mysql:
+    image: mariadb:11
+    environment:
+      MYSQL_DATABASE: wordpress
+      MYSQL_USER: wordpress
+      MYSQL_PASSWORD: wordpress
+      MYSQL_ROOT_PASSWORD: change-me
+    volumes:
+      - db-data:/var/lib/mysql
+
+volumes:
+  db-data: {}
