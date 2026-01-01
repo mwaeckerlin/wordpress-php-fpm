@@ -1,31 +1,25 @@
 version: "3.8"
 
 services:
-  php-fpm:
+  wordpress-php-fpm:
     build: .
-    image: mwaeckerlin/wordpress-proxy
+    image: mwaeckerlin/wordpress-php-fpm
     environment:
-      WORDPRESS_DB_HOST: mysql
-      WORDPRESS_DB_NAME: wordpress
-      WORDPRESS_DB_USER: wordpress
-      WORDPRESS_DB_PASSWORD: wordpress
-
-  wordpress:
-    image: mwaeckerlin/wordpress
-    depends_on:
-      - php-fpm
-    ports:
-      - "8080:8080"
-
-  mysql:
-    image: mariadb:11
-    environment:
-      MYSQL_DATABASE: wordpress
-      MYSQL_USER: wordpress
-      MYSQL_PASSWORD: wordpress
-      MYSQL_ROOT_PASSWORD: change-me
-    volumes:
-      - db-data:/var/lib/mysql
-
-volumes:
-  db-data: {}
+      WORDPRESS_DB_HOST:
+      WORDPRESS_DB_NAME:
+      WORDPRESS_DB_USER:
+      WORDPRESS_DB_PASSWORD:
+      WORDPRESS_DB_CHARSET:
+      WORDPRESS_DB_COLLATE:
+      WORDPRESS_TABLE_PREFIX:
+      WORDPRESS_AUTH_KEY:
+      WORDPRESS_SECURE_AUTH_KEY:
+      WORDPRESS_LOGGED_IN_KEY:
+      WORDPRESS_NONCE_KEY:
+      WORDPRESS_AUTH_SALT:
+      WORDPRESS_SECURE_AUTH_SALT:
+      WORDPRESS_LOGGED_IN_SALT:
+      WORDPRESS_NONCE_SALT:
+      WORDPRESS_HOME:
+      WORDPRESS_SITEURL:
+      WORDPRESS_DEBUG:

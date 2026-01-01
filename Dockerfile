@@ -1,13 +1,27 @@
 FROM mwaeckerlin/very-base as wordpress
 ADD https://wordpress.org/latest.tar.gz /tmp/wordpress.tar.gz
 RUN mkdir -p /root && tar xzf /tmp/wordpress.tar.gz -C /root && mv /root/wordpress /root/app
+COPY wp-config.php /root/app/wp-config.php
 
 FROM mwaeckerlin/php-fpm
-
-ENV WORDPRESS_DB_HOST "mysql" \
-    WORDPRESS_DB_NAME "wordpress" \
-    WORDPRESS_DB_USER "wordpress" \
-    WORDPRESS_DB_PASSWORD "wordpress"
-
+ENV WORDPRESS_DB_HOST "mysql"
+ENV WORDPRESS_DB_PORT "3306"
+ENV WORDPRESS_DB_NAME "wordpress"
+ENV WORDPRESS_DB_USER "wordpress"
+ENV WORDPRESS_DB_PASSWORD "wordpress"
+ENV WORDPRESS_DB_CHARSET "utf8mb4"
+ENV WORDPRESS_DB_COLLATE ""
+ENV WORDPRESS_TABLE_PREFIX "wp_"
+ENV WORDPRESS_AUTH_KEY "change-me"
+ENV WORDPRESS_SECURE_AUTH_KEY "change-me"
+ENV WORDPRESS_LOGGED_IN_KEY "change-me"
+ENV WORDPRESS_NONCE_KEY "change-me"
+ENV WORDPRESS_AUTH_SALT "change-me"
+ENV WORDPRESS_SECURE_AUTH_SALT "change-me"
+ENV WORDPRESS_LOGGED_IN_SALT "change-me"
+ENV WORDPRESS_NONCE_SALT "change-me"
+ENV WORDPRESS_HOME ""
+ENV WORDPRESS_SITEURL ""
+ENV WORDPRESS_DEBUG "false"
 COPY --from=wordpress /root/app /app
 WORKDIR /app
