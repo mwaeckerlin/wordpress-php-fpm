@@ -23,3 +23,7 @@ services:
       WORDPRESS_HOME:
       WORDPRESS_SITEURL:
       WORDPRESS_DEBUG:
+    networks:
+      default:
+        aliases:
+          - php-fpm

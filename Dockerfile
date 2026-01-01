@@ -24,4 +24,3 @@ ENV WORDPRESS_HOME ""
 ENV WORDPRESS_SITEURL ""
 ENV WORDPRESS_DEBUG "false"
 COPY --from=wordpress /root/app /app
-WORKDIR /app
