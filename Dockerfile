@@ -1,7 +1,10 @@
-FROM mwaeckerlin/very-base as wordpress
+FROM mwaeckerlin/very-base AS wordpress
+WORKDIR /app
 ADD https://wordpress.org/latest.tar.gz /tmp/wordpress.tar.gz
-RUN mkdir -p /root && tar xzf /tmp/wordpress.tar.gz -C /root && mv /root/wordpress /root/app
-COPY wp-config.php /root/app/wp-config.php
+RUN tar xzf /tmp/wordpress.tar.gz --strip-components=1
+RUN mkdir wp-secrets
+RUN ${ALLOW_USER} wp-content wp-secrets
+COPY wp-config.php wp-config.php
 
 FROM mwaeckerlin/php-fpm
 ENV WORDPRESS_DB_HOST "mysql"
@@ -23,4 +26,4 @@ ENV WORDPRESS_NONCE_SALT "change-me"
 ENV WORDPRESS_HOME ""
 ENV WORDPRESS_SITEURL ""
 ENV WORDPRESS_DEBUG "false"
-COPY --from=wordpress /root/app /app
+COPY --from=wordpress /app /app
