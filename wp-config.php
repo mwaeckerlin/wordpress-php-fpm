@@ -28,7 +28,7 @@ $secrets_file = __DIR__ . '/wp-secrets/wp-secrets.php';
 if (file_exists($secrets_file)) {
 
     require_once $secrets_file;
-    
+
 } else {
 
     $secret_map = [
@@ -41,7 +41,7 @@ if (file_exists($secrets_file)) {
         'LOGGED_IN_SALT'   => 'WORDPRESS_LOGGED_IN_SALT',
         'NONCE_SALT'       => 'WORDPRESS_NONCE_SALT',
     ];
-    
+
     foreach ($secret_map as $const => $env_var) {
         if (defined($const)) {
             continue;
@@ -73,6 +73,11 @@ if ($siteurl = getenv('WORDPRESS_SITEURL')) {
 $wp_debug = getenv('WORDPRESS_DEBUG');
 if ($wp_debug !== false) {
     define('WP_DEBUG', filter_var($wp_debug, FILTER_VALIDATE_BOOLEAN));
+}
+
+if (!empty($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https') {
+    $_SERVER['HTTPS'] = 'on';
+    $_SERVER['SERVER_PORT'] = 443;
 }
 
 /* That's all, stop editing! Happy blogging. */
