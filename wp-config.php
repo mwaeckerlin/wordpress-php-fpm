@@ -66,7 +66,13 @@ if (file_exists($secrets_file)) {
     @file_put_contents($secrets_file, $data);
 }
 
-// Optional: site URLs and debug flags.
+// Optional: site URLs, internal routing, and debug flags.
+// NGINX_HOST: internal hostname:port for container-to-container requests (e.g., wordpress-nginx:8080)
+// Used to route REST API, WP-Cron, and other self-referencing requests through Docker container network.
+if ($nginx_host = getenv('NGINX_HOST')) {
+    define('NGINX_INTERNAL_HOST', $nginx_host);
+}
+
 if ($home = getenv('WORDPRESS_HOME')) {
     define('WP_HOME', $home);
 }
@@ -125,4 +131,65 @@ if (!empty($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PRO
 if (!defined('ABSPATH')) {
     define('ABSPATH', __DIR__ . '/');
 }
+
 require_once ABSPATH . 'wp-settings.php';
+
+// Internal routing filter: reroute self-calls to the container network.
+// - Always reroutes localhost/127.0.0.1 to the internal host (default: wordpress-nginx:8080).
+// - Also reroutes WP_HOME / WP_SITEURL targets when set.
+$internal_nginx_host = getenv('NGINX_HOST');
+if ($internal_nginx_host === false || $internal_nginx_host === '') {
+    $internal_nginx_host = 'wordpress-nginx:8080';
+}
+
+function wp_internal_reroute_url($url, $internal_host)
+{
+    $parsed = parse_url($url);
+    if ($parsed === false || !isset($parsed['host'])) {
+        return $url;
+    }
+
+    $host = strtolower($parsed['host']);
+    $scheme = isset($parsed['scheme']) ? $parsed['scheme'] : 'http';
+    $path = isset($parsed['path']) ? $parsed['path'] : '';
+    $query = isset($parsed['query']) ? '?' . $parsed['query'] : '';
+
+    $should_reroute = ($host === 'localhost' || $host === '127.0.0.1');
+
+    if (!$should_reroute) {
+        $external_urls = array();
+        if (defined('WP_HOME')) {
+            $external_urls[] = WP_HOME;
+        }
+        if (defined('WP_SITEURL')) {
+            $external_urls[] = WP_SITEURL;
+        }
+
+        foreach ($external_urls as $external_url) {
+            if (!empty($external_url) && strpos($url, $external_url) === 0) {
+                $should_reroute = true;
+                break;
+            }
+        }
+    }
+
+    if ($should_reroute) {
+        return $scheme . '://' . $internal_host . $path . $query;
+    }
+
+    return $url;
+}
+
+add_filter('http_request_args', function ($args, $url) use ($internal_nginx_host) {
+    $new_url = wp_internal_reroute_url($url, $internal_nginx_host);
+    if ($new_url !== $url) {
+        $args['url'] = $new_url;
+        $args['sslverify'] = false; // Same container network
+    }
+    return $args;
+}, 10, 2);
+
+// Ensure REST URLs themselves are generated with the internal host to avoid localhost targets.
+add_filter('rest_url', function ($url) use ($internal_nginx_host) {
+    return wp_internal_reroute_url($url, $internal_nginx_host);
+});

@@ -26,4 +26,5 @@ ENV WORDPRESS_NONCE_SALT "change-me"
 ENV WORDPRESS_HOME ""
 ENV WORDPRESS_SITEURL ""
 ENV WORDPRESS_DEBUG "false"
+ENV NGINX_HOST "wordpress-nginx:8080"
 COPY --from=wordpress /app /app
