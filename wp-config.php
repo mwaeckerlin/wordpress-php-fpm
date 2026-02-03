@@ -134,6 +134,31 @@ if (!defined('ABSPATH')) {
 
 require_once ABSPATH . 'wp-settings.php';
 
+// Ensure REST URLs use external host for browser requests
+add_filter('rest_url', function ($url) {
+    // Only fix if URL contains internal nginx host
+    if (strpos($url, 'wordpress-nginx:8080') !== false) {
+        $external_url = '';
+        if (defined('WP_HOME') && !empty(WP_HOME)) {
+            $external_url = WP_HOME;
+        } elseif (defined('WP_SITEURL') && !empty(WP_SITEURL)) {
+            $external_url = WP_SITEURL;
+        } elseif (!empty($_SERVER['HTTP_HOST'])) {
+            $scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
+            $port = $_SERVER['SERVER_PORT'];
+            $port_str = ($port != '80' && $port != '443') ? ':' . $port : '';
+            $external_url = $scheme . '://' . $_SERVER['HTTP_HOST'] . $port_str;
+        }
+
+        if (!empty($external_url)) {
+            // Replace the full internal URL with external URL
+            $url = str_replace('http://wordpress-nginx:8080', rtrim($external_url, '/'), $url);
+            $url = str_replace('https://wordpress-nginx:8080', rtrim($external_url, '/'), $url);
+        }
+    }
+    return $url;
+}, 999); // High priority to run last
+
 // Internal routing filter: reroute self-calls to the container network.
 // - Always reroutes localhost/127.0.0.1 to the internal host (default: wordpress-nginx:8080).
 // - Also reroutes WP_HOME / WP_SITEURL targets when set.
