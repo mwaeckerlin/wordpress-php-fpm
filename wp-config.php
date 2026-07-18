@@ -84,7 +84,6 @@ $debug_log_path = getenv('WORDPRESS_DEBUG_LOG');
 
 $wp_debug = false;
 $wp_debug_log = false;
-$wp_debug_display = false;
 
 if (!($debug_mode === false || $debug_mode === '' || strtolower($debug_mode) === 'false' || $debug_mode === '0')) {
     switch (strtolower($debug_mode)) {
@@ -97,15 +96,6 @@ if (!($debug_mode === false || $debug_mode === '' || strtolower($debug_mode) ===
         case 'log':
             $wp_debug = true;
             $wp_debug_log = true;
-            break;
-        case 'display':
-            $wp_debug = true;
-            $wp_debug_display = true;
-            break;
-        case 'all':
-            $wp_debug = true;
-            $wp_debug_log = true;
-            $wp_debug_display = true;
             break;
         default:
             $wp_debug = filter_var($debug_mode, FILTER_VALIDATE_BOOLEAN);
@@ -120,7 +110,11 @@ if ($debug_log_path !== false && $debug_log_path !== '') {
 
 define('WP_DEBUG', $wp_debug);
 define('WP_DEBUG_LOG', $wp_debug_log);
-define('WP_DEBUG_DISPLAY', $wp_debug_display);
+// Errors are never shown to the client: the mwaeckerlin/php-fpm base forces
+// php_admin_flag[display_errors]=off, which ini_set() cannot override. Debug
+// output goes to the container log (WORDPRESS_DEBUG=true) or the WP debug log
+// (WORDPRESS_DEBUG=log).
+define('WP_DEBUG_DISPLAY', false);
 
 if (!empty($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https') {
     $_SERVER['HTTPS'] = 'on';
