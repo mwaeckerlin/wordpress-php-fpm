@@ -3,7 +3,9 @@
 
 $db_name = getenv('WORDPRESS_DB_NAME') ?: 'wordpress';
 $db_user = getenv('WORDPRESS_DB_USER') ?: 'wordpress';
-$db_password = getenv('WORDPRESS_DB_PASSWORD') ?: 'wordpress';
+// no default password: without WORDPRESS_DB_PASSWORD the connection fails at
+// once instead of coming up on a publicly known credential
+$db_password = (string) getenv('WORDPRESS_DB_PASSWORD');
 $db_host_raw = getenv('WORDPRESS_DB_HOST') ?: 'mysql';
 $db_port = getenv('WORDPRESS_DB_PORT') ?: '3306';
 $db_host = (strpos($db_host_raw, ':') === false) ? ($db_host_raw . ':' . $db_port) : $db_host_raw;

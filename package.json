@@ -1,11 +1,15 @@
 {
   "name": "@mwaeckerlin/wordpress-php-fpm",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "scripts": {
     "build": "docker compose build",
     "start": "docker compose up --build --force-recreate --remove-orphans",
     "start:daemon": "docker compose up -d --build --force-recreate --remove-orphans",
     "start:dev": "docker compose up --build --force-recreate --remove-orphans",
-    "stop": "docker compose down"
+    "stop": "docker compose down",
+    "deploy": "docker compose push",
+    "test": "npm run test:image && npm run test:config",
+    "test:image": "npm run build && bash tests/image-contract.sh mwaeckerlin/wordpress-php-fpm",
+    "test:config": "bash tests/config-contract.sh mwaeckerlin/wordpress-php-fpm"
   }
 }
