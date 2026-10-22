@@ -26,6 +26,13 @@ This is the most lean and secure image for a PHP WordPress server:
     - `WORDPRESS_SITEURL`: Base URL of the wordpress site (optional).
     - `WORDPRESS_TABLE_PREFIX`: table prefix; default `wp_`, 
     - `NGINX_HOST`: Internal hostname and port for container-to-container communication (default: `wordpress-nginx:8080`). Used to reroute WordPress's own requests (REST API, WP-Cron, etc.) through the Docker container network instead of external ports. Optional; if unset, the default is used.
+    - `WORDPRESS_DEBUG`: debug mode, default `false`; see [mwaeckerlin/wordpress] for the values.
+    - `WORDPRESS_DEBUG_LOG`: log file path; setting it switches debug on and writes there.
+    - `WORDPRESS_DISALLOW_FILE_MODS`: default `false`, the administrator may install and update plugins, themes and language packs; `true` forbids it.
+    - `WORDPRESS_MEMORY_LIMIT`: memory WordPress asks for (`WP_MEMORY_LIMIT`), such as `256M`; default empty, WordPress keeps its own limit.
+  - inherited from [mwaeckerlin/php-fpm]: `MEMORY_LIMIT` (default `512M`), `UPLOAD_MAX_FILESIZE` (`10G`), `POST_MAX_SIZE` (`100G`), `MAX_FILE_UPLOADS` (`1000`), `MAX_EXECUTION_TIME` (`30`), `MAX_INPUT_TIME` (`60`), `MAX_CHILDREN` (`50`); see there.
+
+All features are listed in [FEATURES.md](FEATURES.md), all tests in [TESTS.md](TESTS.md); `npm test` runs them.
 
 
 ## Persistence and Volumes
@@ -34,22 +41,28 @@ This is the most lean and secure image for a PHP WordPress server:
 - The generated secrets are stored under `/app/wp-secrets`. Mount that volume only into [mwaeckerlin/wordpress-php-fpm] so keys persist and nginx cannot read them.
 
 
-## Internal Container Routing (REST API & WP-Cron)
+## Internal Container Routing
 
 WordPress makes internal requests to itself for REST API calls, WP-Cron jobs, and other operations. This image includes a filter in `wp-config.php` that automatically reroutes these self-referencing requests through the Docker container network instead of external ports.
 
-**How it works:**
+### Rerouting
+
 1. External requests can reach WordPress via `WORDPRESS_HOME` / `WORDPRESS_SITEURL` if set (e.g., `http://localhost:8321`).
 2. Any self-call to `localhost` or `127.0.0.1` is always rerouted to the internal host (default `wordpress-nginx:8080`).
 3. If `WORDPRESS_HOME` / `WORDPRESS_SITEURL` are set, self-calls to these URLs are rerouted to the same internal host.
-4. This avoids port binding issues and keeps internal traffic on the Docker network.
+4. REST URLs handed to the browser carry the external URL again, whichever internal host `NGINX_HOST` names.
+5. This avoids port binding issues and keeps internal traffic on the Docker network.
 
-**Environment Variables:**
+### Variables
+
 - `WORDPRESS_HOME`: External URL where WordPress is accessible from outside the container (optional)
 - `WORDPRESS_SITEURL`: External URL for the WordPress site (optional)
 - `NGINX_HOST`: Internal hostname:port for container-to-container requests (optional, default: `wordpress-nginx:8080`). Note: include the port number if you override it.
 
-**Example Docker Compose setup (with explicit URLs):**
+### Example
+
+A Docker Compose setup with explicit URLs:
+
 ```yaml
 wordpress-php-fpm:
   environment:

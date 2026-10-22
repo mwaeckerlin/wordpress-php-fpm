@@ -19,11 +19,35 @@ define('DB_HOST', $db_host);
 define('DB_CHARSET', $db_charset);
 define('DB_COLLATE', $db_collate);
 
+// an invalid value is logged and the default stays, so a typo never switches a setting silently
+function wp_env_flag($name, $default)
+{
+    $value = getenv($name);
+    if ($value === false || $value === '') {
+        return $default;
+    }
+    $flag = filter_var($value, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE);
+    if ($flag === null) {
+        error_log($name . '=' . $value . ' is neither true nor false, using ' . var_export($default, true));
+        return $default;
+    }
+    return $flag;
+}
+
 // enforce direct FS writes to avoid FTP prompts
 define('FS_METHOD', 'direct');
 
-// Disable file modifications check for language packs to allow downloads
-define('DISALLOW_FILE_MODS', false);
+// false lets the administrator install and update plugins, themes and language packs
+define('DISALLOW_FILE_MODS', wp_env_flag('WORDPRESS_DISALLOW_FILE_MODS', false));
+
+$memory_limit = getenv('WORDPRESS_MEMORY_LIMIT');
+if ($memory_limit !== false && $memory_limit !== '') {
+    if (preg_match('/^[0-9]+[KMG]?$/i', $memory_limit)) {
+        define('WP_MEMORY_LIMIT', $memory_limit);
+    } else {
+        error_log('WORDPRESS_MEMORY_LIMIT=' . $memory_limit . ' is no size such as 256M, WordPress keeps its own limit');
+    }
+}
 
 $table_prefix = getenv('WORDPRESS_TABLE_PREFIX') ?: 'wp_';
 
@@ -93,14 +117,16 @@ if (!($debug_mode === false || $debug_mode === '' || strtolower($debug_mode) ===
         case 'on':
         case 'yes':
         case '1':
+        case 'display':
             $wp_debug = true;
             break;
         case 'log':
+        case 'all':
             $wp_debug = true;
             $wp_debug_log = true;
             break;
         default:
-            $wp_debug = filter_var($debug_mode, FILTER_VALIDATE_BOOLEAN);
+            $wp_debug = wp_env_flag('WORDPRESS_DEBUG', false);
     }
 }
 
@@ -130,10 +156,18 @@ if (!defined('ABSPATH')) {
 
 require_once ABSPATH . 'wp-settings.php';
 
+// Internal routing filter: reroute self-calls to the container network.
+// - Always reroutes localhost/127.0.0.1 to the internal host (default: wordpress-nginx:8080).
+// - Also reroutes WP_HOME / WP_SITEURL targets when set.
+$internal_nginx_host = getenv('NGINX_HOST');
+if ($internal_nginx_host === false || $internal_nginx_host === '') {
+    $internal_nginx_host = 'wordpress-nginx:8080';
+}
+
 // Ensure REST URLs use external host for browser requests
-add_filter('rest_url', function ($url) {
+add_filter('rest_url', function ($url) use ($internal_nginx_host) {
     // Only fix if URL contains internal nginx host
-    if (strpos($url, 'wordpress-nginx:8080') !== false) {
+    if (strpos($url, $internal_nginx_host) !== false) {
         $external_url = '';
         if (defined('WP_HOME') && !empty(WP_HOME)) {
             $external_url = WP_HOME;
@@ -148,20 +182,12 @@ add_filter('rest_url', function ($url) {
 
         if (!empty($external_url)) {
             // Replace the full internal URL with external URL
-            $url = str_replace('http://wordpress-nginx:8080', rtrim($external_url, '/'), $url);
-            $url = str_replace('https://wordpress-nginx:8080', rtrim($external_url, '/'), $url);
+            $url = str_replace('http://' . $internal_nginx_host, rtrim($external_url, '/'), $url);
+            $url = str_replace('https://' . $internal_nginx_host, rtrim($external_url, '/'), $url);
         }
     }
     return $url;
 }, 999); // High priority to run last
-
-// Internal routing filter: reroute self-calls to the container network.
-// - Always reroutes localhost/127.0.0.1 to the internal host (default: wordpress-nginx:8080).
-// - Also reroutes WP_HOME / WP_SITEURL targets when set.
-$internal_nginx_host = getenv('NGINX_HOST');
-if ($internal_nginx_host === false || $internal_nginx_host === '') {
-    $internal_nginx_host = 'wordpress-nginx:8080';
-}
 
 function wp_internal_reroute_url($url, $internal_host)
 {

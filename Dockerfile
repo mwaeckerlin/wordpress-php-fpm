@@ -17,6 +17,8 @@ ENV WORDPRESS_TABLE_PREFIX="wp_"
 ENV WORDPRESS_HOME=""
 ENV WORDPRESS_SITEURL=""
 ENV WORDPRESS_DEBUG="false"
+ENV WORDPRESS_DISALLOW_FILE_MODS="false"
+ENV WORDPRESS_MEMORY_LIMIT=""
 ENV NGINX_HOST="wordpress-nginx:8080"
 # No secret is set here: a value in the image is the same in every
 # installation. WORDPRESS_DB_PASSWORD has no default, so the database
