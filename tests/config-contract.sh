@@ -12,6 +12,9 @@
 # tests/wp-config-probe.php loads the real wp-config.php of the image with the
 # PHP CLI and prints what it defines, once with the defaults and once per value.
 #
+# The php-fpm pool keeps session upload progress and fatal error backtraces off
+# and locked, as mwaeckerlin/php-fpm sets them.
+#
 # Usage: tests/config-contract.sh IMAGE
 
 set -uo pipefail
@@ -118,6 +121,25 @@ if docker image inspect "${IMAGE}" > /dev/null 2>&1; then
         _pass "max_children_inherited_from_environment"
     else
         _fail "max_children_inherited_from_environment" "MAX_CHILDREN=9 does not reach pm.max_children"
+    fi
+
+    # CVE-2026-109618 and CVE-2026-109619, inherited from mwaeckerlin/php-fpm
+    INFO=$(docker run --rm --pull=never "${IMAGE}" -i 2>&1)
+    if grep -Eiq 'session\.upload_progress\.enabled( => |</td><td class="v">)(Off|0)' <<< "${INFO}"; then
+        _pass "session_upload_progress_off"
+    else
+        _fail "session_upload_progress_off" "$(grep -i 'session.upload_progress.enabled' <<< "${INFO}" || echo 'setting not reported')"
+    fi
+    CONFIG=$(docker run --rm --pull=never "${IMAGE}" -tt 2>&1)
+    if grep -Eq 'session\.upload_progress\.enabled\] = (off|no|0)' <<< "${CONFIG}"; then
+        _pass "session_upload_progress_locked"
+    else
+        _fail "session_upload_progress_locked" "the pool does not lock session.upload_progress.enabled off"
+    fi
+    if grep -Eq 'fatal_error_backtraces\] = (off|no|0)' <<< "${CONFIG}"; then
+        _pass "fatal_error_backtraces_locked"
+    else
+        _fail "fatal_error_backtraces_locked" "the pool does not lock fatal_error_backtraces off"
     fi
 fi
 

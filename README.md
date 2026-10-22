@@ -31,6 +31,7 @@ This is the most lean and secure image for a PHP WordPress server:
     - `WORDPRESS_DISALLOW_FILE_MODS`: default `false`, the administrator may install and update plugins, themes and language packs; `true` forbids it.
     - `WORDPRESS_MEMORY_LIMIT`: memory WordPress asks for (`WP_MEMORY_LIMIT`), such as `256M`; default empty, WordPress keeps its own limit.
   - inherited from [mwaeckerlin/php-fpm]: `MEMORY_LIMIT` (default `512M`), `UPLOAD_MAX_FILESIZE` (`10G`), `POST_MAX_SIZE` (`100G`), `MAX_FILE_UPLOADS` (`1000`), `MAX_EXECUTION_TIME` (`30`), `MAX_INPUT_TIME` (`60`), `MAX_CHILDREN` (`50`); see there.
+  - locked off by [mwaeckerlin/php-fpm] against CVE-2026-109618 and CVE-2026-109619, and not changeable: `session.upload_progress.enabled` and `fatal_error_backtraces`.
 
 All features are listed in [FEATURES.md](FEATURES.md), all tests in [TESTS.md](TESTS.md); `npm test` runs them.
 

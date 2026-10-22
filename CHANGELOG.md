@@ -1,5 +1,8 @@
 # Changelog
 
+- 2026-10-22 **1.0.3**
+    - Session upload progress and fatal error backtraces stay off and locked, as the base image sets them against CVE-2026-109618 and CVE-2026-109619, and the test suite proves it in the image itself
+
 - 2026-10-22 **1.0.2**
     - REST URLs handed to the browser carry the external address also when `NGINX_HOST` names another internal host; before, they kept the internal host unless it was `wordpress-nginx:8080`
     - `WORDPRESS_DEBUG` accepts `all` again, which writes the WordPress debug log, and `display`, which sends errors to the container log; both had silently switched debugging off

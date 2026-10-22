@@ -21,3 +21,4 @@ The settings tests run the real `wp-config.php` of the built image with the PHP 
 - **F6** `tests/config-contract.sh` › memory_limit_default, memory_limit_set — undefined by default, `256M` when set.
 - **F6** `tests/config-contract.sh` › memory_limit_invalid_ignored — a value that is no size stays undefined and is named in the log.
 - **F7** `tests/config-contract.sh` › php_limits_inherited_default, php_limits_inherited_from_environment, max_children_inherited_from_environment — `php-fpm -i` and `php-fpm -tt` of this image report the defaults of the base image and the values passed with `-e`.
+- **F8** `tests/config-contract.sh` › session_upload_progress_off, session_upload_progress_locked, fatal_error_backtraces_locked — `php-fpm -i` reports `session.upload_progress.enabled` Off, and `php-fpm -tt` shows the pool locking it and `fatal_error_backtraces` off.
