@@ -1,5 +1,8 @@
 # Changelog
 
+- 2026-10-23 **1.0.4**
+    - The config contract no longer fails at random: the check of `MAX_CHILDREN` piped `php-fpm -tt` into `grep -q`, which failed whenever `grep` stopped reading first and php-fpm died on the closed pipe
+
 - 2026-10-22 **1.0.3**
     - Session upload progress and fatal error backtraces stay off and locked, as the base image sets them against CVE-2026-109618 and CVE-2026-109619, and the test suite proves it in the image itself
 

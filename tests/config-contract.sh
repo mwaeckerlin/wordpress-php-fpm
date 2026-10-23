@@ -117,7 +117,9 @@ if docker image inspect "${IMAGE}" > /dev/null 2>&1; then
     else
         _fail "php_limits_inherited_from_environment" "$(echo ${SET})"
     fi
-    if docker run --rm --pull=never -e MAX_CHILDREN=9 "${IMAGE}" -tt 2>&1 | grep -q 'pm.max_children = 9$'; then
+    # grep reads the whole output: grep -q stops at the first match, php-fpm then dies on SIGPIPE and pipefail fails the check
+    SET_CONFIG=$(docker run --rm --pull=never -e MAX_CHILDREN=9 "${IMAGE}" -tt 2>&1)
+    if grep -q 'pm.max_children = 9$' <<<"${SET_CONFIG}"; then
         _pass "max_children_inherited_from_environment"
     else
         _fail "max_children_inherited_from_environment" "MAX_CHILDREN=9 does not reach pm.max_children"
